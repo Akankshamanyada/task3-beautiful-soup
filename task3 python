@@ -1,0 +1,53 @@
+# Importing necessary libraries
+from bs4 import BeautifulSoup
+import requests
+import csv
+
+# Getting the HTML content from the website
+source = requests.get('http://coreyms.com').text
+
+# Parsing the HTML content using BeautifulSoup
+soup = BeautifulSoup(source, 'lxml')
+
+# Opening a CSV file in write mode
+csv_file = open('cms_scrape.csv', 'w')
+
+# Creating a CSV writer object
+csv_writer = csv.writer(csv_file)
+
+# Writing the header row in the CSV file
+csv_writer.writerow(['headline', 'summary', 'video_link'])
+
+# Looping through each article on the webpage
+for article in soup.find_all('article'):
+    # Extracting the headline of the article
+    headline = article.h2.a.text
+    print(headline)
+
+    # Extracting the summary of the article
+    summary = article.find('div', class_='entry-content').p.text
+    print(summary)
+
+    try:
+        # Extracting the YouTube video source link from the iframe
+        vid_src = article.find('iframe', class_='youtube-player')['src']
+
+        # Extracting the YouTube video ID from the video source link
+        vid_id = vid_src.split('/')[4]
+        vid_id = vid_id.split('?')[0]
+
+        # Constructing the YouTube video link
+        yt_link = f'https://youtube.com/watch?v={vid_id}'
+    except Exception as e:
+        # If no video link is found, set yt_link to None
+        yt_link = None
+
+    print(yt_link)
+
+    print()
+
+    # Writing the data to the CSV file
+    csv_writer.writerow([headline, summary, yt_link])
+
+# Closing the CSV file
+csv_file.close()
